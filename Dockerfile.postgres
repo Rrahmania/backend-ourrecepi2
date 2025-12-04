@@ -1,0 +1,12 @@
+FROM postgres:16-alpine
+
+# Copy init scripts (these run after DB is initialized)
+COPY init.sql /docker-entrypoint-initdb.d/01-init.sql
+
+COPY pg_hba.conf /tmp/pg_hba.conf
+
+# Create a setup script to copy pg_hba.conf after initialization
+RUN echo '#!/bin/sh\ncp /tmp/pg_hba.conf /var/lib/postgresql/data/pg_hba.conf\nchown postgres:postgres /var/lib/postgresql/data/pg_hba.conf\n' > /docker-entrypoint-initdb.d/00-setup-pg-hba.sh && chmod +x /docker-entrypoint-initdb.d/00-setup-pg-hba.sh
+
+# Set password encryption to scram-sha-256 for better security
+ENV POSTGRES_INITDB_ARGS="-c password_encryption=scram-sha-256"
